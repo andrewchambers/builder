@@ -1,0 +1,8 @@
+echo "| commit | result |"
+echo "|--------|--------|"
+for buildlog in `ls $1 | sort -n`
+do
+	summmary=`head -n 1 $1/$buildlog`
+	exitcode=`tail -n 1 $1/$buildlog`
+	echo "| $summary | $exitcode |"
+done
