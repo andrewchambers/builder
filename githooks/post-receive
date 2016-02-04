@@ -1,8 +1,11 @@
+# customize this to point to the fifo you are using to talk to the coordinator
+fifopath="~/fifo"
+
 while read oldrev newrev refname
 do
 	echo $oldrev $newrev $refname
 	for rev in `git rev-list $oldrev..$newrev`
 	do
-		echo $rev $refname > ~/fifo
+		echo $rev $refname > $fifopath
 	done
 done
