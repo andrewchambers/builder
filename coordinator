@@ -1,0 +1,45 @@
+gitpath=$1
+
+if [ -z $1 ]; then
+	echo "please specify the path of the git repository"
+	exit 1
+fi
+
+mkdir -p buildlogs
+mkdir -p configs
+mkdir -p hooks/buildcomplete
+mkdir -p hooks/commitcomplete
+
+while read rev ref
+do
+	# rate limit for sanity
+	sleep 1
+	if [ $ref != refs/heads/master ] ; then
+		echo "skipping ref $ref"
+		continue
+	fi
+	echo "executing build for $rev $ref"
+	tarfile=$rev.tar.gz
+	committime=$(cd $gitpath && git show -s --format="%ct")
+	(cd $gitpath && git archive --format=tar $rev) | gzip > $tarfile
+	for cfg in `ls ./configs/`
+	do
+		buildlog=buildlogs/$committime-$cfg-$rev.log
+		echo "COMMIT=$rev" > $buildlog
+		timeout 10m ./configs/$cfg $tarfile &>> $buildlog
+		exitcode=$?
+		echo "BUILDEREXIT=$exitcode" >> $buildlog
+		echo "build complete $buildlog"
+		echo "running buildcomplete hooks for $cfg $rev"
+		for hook in `ls ./hooks/buildcomplete/`
+		do
+			timeout 1m ./hooks/buildcomplete/$hook $exitcode $buildlog
+		done
+	done
+	echo "running commitcomplete hooks for $rev"
+	for hook in `ls ./hooks/commitcomplete/`
+	do
+		./hooks/commitcomplete/$hook $rev $ref
+	done
+	rm $tarfile
+done
