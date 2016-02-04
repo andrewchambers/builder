@@ -24,7 +24,7 @@ do
 	(cd $gitpath && git archive --format=tar $rev) | gzip > $tarfile
 	for cfg in `ls ./configs/`
 	do
-		buildlog=buildlogs/$committime-$cfg-$rev.log
+		buildlog=buildlogs/$committime-$cfg-$rev.txt
 		(cd $gitpath && git show -s --oneline) > $buildlog
 		timeout 10m ./configs/$cfg $tarfile &>> $buildlog
 		exitcode=$?
