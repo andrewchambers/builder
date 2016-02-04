@@ -20,15 +20,15 @@ do
 	fi
 	echo "executing build for $rev $ref"
 	tarfile=$rev.tar.gz
-	committime=$(cd $gitpath && git show -s --format="%ct")
+	committime=$(cd $gitpath && git show -s --format="%ct" $rev)
 	(cd $gitpath && git archive --format=tar $rev) | gzip > $tarfile
 	for cfg in `ls ./configs/`
 	do
 		buildlog=buildlogs/$committime-$cfg-$rev.log
-		echo "COMMIT=$rev" > $buildlog
+		(cd $gitpath && git show -s --oneline) > $buildlog
 		timeout 10m ./configs/$cfg $tarfile &>> $buildlog
 		exitcode=$?
-		echo "BUILDEREXIT=$exitcode" >> $buildlog
+		echo "exit $exitcode" >> $buildlog
 		echo "build complete $buildlog"
 		echo "running buildcomplete hooks for $cfg $rev"
 		for hook in `ls ./hooks/buildcomplete/`
